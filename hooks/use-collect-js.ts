@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Define types for CollectJS
 interface CollectJSFields {
@@ -36,13 +36,11 @@ declare global {
 }
 
 export function useCollectJS(tokenizationKey: string) {
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(false); // use state for rendering
+  const collectJSRef = useRef<CollectJSInstance | null>(null); // ref for SDK instance
 
   useEffect(() => {
-    // If already loaded, do nothing
-    if (window.CollectJS) {
-      return;
-    }
+    if (typeof window === "undefined") return; // only run in client
 
     const script = document.createElement("script");
     script.src = "https://secure.mobiusgateway.com/token/Collect.js";
@@ -50,8 +48,9 @@ export function useCollectJS(tokenizationKey: string) {
     script.async = true;
 
     script.onload = () => {
-      console.log("CollectJS loaded.");
-      setLoaded(true);
+      collectJSRef.current = window.CollectJS ?? null;
+      setLoaded(true); // triggers re-render safely
+      console.log("CollectJS loaded");
     };
 
     script.onerror = () => {
@@ -61,11 +60,11 @@ export function useCollectJS(tokenizationKey: string) {
     document.body.appendChild(script);
 
     return () => {
-      // Optional cleanup: Remove script + global object
       document.body.removeChild(script);
-      // delete window.CollectJS; ← only if you want clean reset
+      collectJSRef.current = null;
     };
   }, [tokenizationKey]);
 
-  return { CollectJS: window.CollectJS, loaded };
+  // only return the SDK instance; do not use it for conditional rendering
+  return { collectJSRef, loaded };
 }

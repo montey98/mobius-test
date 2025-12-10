@@ -6,8 +6,8 @@ import { useCollectJS } from "@/hooks/use-collect-js";
 const TOKEN_KEY = process.env.NEXT_PUBLIC_MOBIUSPAY_PUBLIC_KEY!;
 
 export default function InlineCartPage() {
-  const { CollectJS, loaded } = useCollectJS(TOKEN_KEY);
-  console.log(CollectJS);
+  const { collectJSRef, loaded } = useCollectJS(TOKEN_KEY);
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,9 +29,9 @@ export default function InlineCartPage() {
 
   // Configure CollectJS once loaded
   useEffect(() => {
-    if (!loaded || !CollectJS) return;
+    if (!loaded || !collectJSRef.current) return;
 
-    CollectJS.configure({
+    collectJSRef.current!.configure({
       variant: "inline",
       callback: (token: object) => {
         handleSubmit(token);
@@ -42,7 +42,7 @@ export default function InlineCartPage() {
         cvv: { selector: "#cvv" },
       },
     });
-  }, [loaded, CollectJS]);
+  }, [loaded, collectJSRef]);
 
   if (!loaded) return <p>Loading payment system…</p>;
 
@@ -51,11 +51,11 @@ export default function InlineCartPage() {
       onSubmit={(e) => {
         e.preventDefault();
 
-        if (CollectJS) {
-          CollectJS.startPaymentRequest();
+        if (collectJSRef) {
+          collectJSRef.current!.startPaymentRequest();
         }
       }}
-      className="space-y-4"
+      className="space-y-4 container"
     >
       <div>
         <label className="block mb-1">First Name</label>
